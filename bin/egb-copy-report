@@ -1,0 +1,133 @@
+#!/bin/sh
+BASE="/home/deck/homebrew/plugins/eGPUBridge"
+OUT="/tmp/egpubridge-copy-report.txt"
+
+{
+  echo "===== COPY START: eGPUBridge report ====="
+  echo "Time: $(date)"
+  echo
+
+  echo "===== 1) CONFIG ====="
+  echo "--- output_order.conf ---"
+  cat "$BASE/output_order.conf" 2>/dev/null || echo "missing"
+  echo
+  echo "--- prefer_vk_device.conf ---"
+  cat "$BASE/prefer_vk_device.conf" 2>/dev/null || echo "missing"
+  echo
+  echo "--- gamescope_mode.conf ---"
+  cat "$BASE/gamescope_mode.conf" 2>/dev/null || echo "missing"
+  echo
+
+  echo "===== 2) GAMESCOPE ====="
+  pgrep -a gamescope || true
+  echo
+
+  echo "===== 3) DISPLAY / GPU STATUS ====="
+  python3 - <<'PY'
+import sys, json
+sys.path.insert(0, "/home/deck/homebrew/plugins/eGPUBridge")
+try:
+    import main
+    st = main.build_status(heavy=False)
+    print(json.dumps({
+        "ok": st.get("ok"),
+        "version": st.get("version"),
+        "connected": st.get("connected"),
+        "display_target": st.get("display_target"),
+        "gpu_label": st.get("gpu_label"),
+        "display_label": st.get("display_label"),
+        "current_mode": st.get("current_mode"),
+        "internal_display": st.get("internal_display"),
+        "external_display": st.get("external_display"),
+        "tv_network": st.get("tv_network"),
+        "tv_power": st.get("tv_power"),
+    }, indent=2, ensure_ascii=False, default=str))
+except Exception as e:
+    print("ERROR:", repr(e))
+PY
+  echo
+
+  echo "===== 4) TV CONTROL HEALTH ====="
+  python3 - <<'PY'
+import sys, json, asyncio
+sys.path.insert(0, "/home/deck/homebrew/plugins/eGPUBridge")
+try:
+    import main
+    async def run():
+        res = await main.Plugin.tv_control_health()
+        print(json.dumps({
+            "ok": res.get("ok"),
+            "label": res.get("label"),
+            "network": res.get("network"),
+            "adb": res.get("adb"),
+            "wol": res.get("wol"),
+            "buttons": res.get("buttons"),
+            "missing": res.get("missing"),
+        }, indent=2, ensure_ascii=False, default=str))
+    asyncio.run(run())
+except Exception as e:
+    print("ERROR:", repr(e))
+PY
+  echo
+
+  echo "===== 5) ADB DEVICES ====="
+  if [ -x "$BASE/bin/adb" ]; then
+    "$BASE/bin/adb" devices -l || true
+  else
+    echo "local adb missing"
+  fi
+  echo
+
+  echo "===== 6) UI / TV CONTROL MARKERS ====="
+  grep -nE 'TV ON|HDMI|TV OFF|tv_on|tv_input|tv_off|TV Control BETA|Check TV Control status|FRONTEND_CLICK_TV_CONTROL|doCall' "$BASE/src/index.tsx" 2>/dev/null | tail -n 80 || true
+  echo
+
+  echo "===== 7) BACKEND METHOD SIGNATURES ====="
+  python3 - <<'PY'
+import sys, inspect, json
+sys.path.insert(0, "/home/deck/homebrew/plugins/eGPUBridge")
+try:
+    import main
+    names = [
+        "tv_on", "tv_input", "tv_off",
+        "tv_input_mode", "tv_control_health",
+        "smart_toggle_display", "apply_egpu_mode", "restore_internal_mode",
+    ]
+    out = {}
+    for name in names:
+        obj = getattr(main.Plugin, name, None)
+        if obj is None:
+            out[name] = {"exists": False}
+            continue
+        try:
+            sig = str(inspect.signature(obj))
+        except Exception as e:
+            sig = "signature_error: " + str(e)
+        out[name] = {
+            "exists": True,
+            "signature": sig,
+            "is_coroutine": inspect.iscoroutinefunction(obj),
+            "type": str(type(obj)),
+        }
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+except Exception as e:
+    print("ERROR:", repr(e))
+PY
+  echo
+
+  echo "===== 8) RECENT USEFUL PLUGIN LOGS ====="
+  grep -Ei 'UI_CALL|FRONTEND|tv_on|tv_input|tv_off|tv_control|KEYCODE|HDMI_SWITCH|python_wol|adb|restore_internal|apply_egpu|RUN CLEAN|STATUS_SUMMARY' "$BASE/plugin.log" 2>/dev/null | tail -n 100 || true
+  echo
+
+  echo "===== 9) LATEST KNOWN GOOD BACKUPS ====="
+  ls -1dt "$BASE"/stable_backup/KNOWN_GOOD_* 2>/dev/null | head -n 12 || true
+  echo
+  ls -1t "$BASE"/stable_backup/rollback_known_good_* 2>/dev/null | head -n 12 || true
+  echo
+
+  echo "===== COPY END: eGPUBridge report ====="
+} > "$OUT"
+
+cat "$OUT"
+echo
+echo "Report file saved to: $OUT"
