@@ -1,0 +1,17 @@
+# eGPUBridge TV control example config
+# Copy to:
+#   /home/deck/.config/egpubridge-tv.conf
+#
+# Do NOT commit your real IP/MAC to GitHub.
+
+TV_IP=YOUR_TV_IP
+TV_MAC=YOUR_TV_MAC
+TV_ADB_PORT=5555
+
+# Default HDMI input number.
+TV_DEFAULT_HDMI=1
+
+# Optional connector to HDMI mapping.
+# Example:
+# TV_CONNECTOR_1=HDMI-A-1
+# TV_HDMI_1=YOUR_ANDROID_TV_INPUT_ID

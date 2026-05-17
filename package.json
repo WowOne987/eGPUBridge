@@ -1,0 +1,11 @@
+{
+  "name": "egpubridge",
+  "version": "0.7.27",
+  "description": "Decky Loader plugin for eGPU status/switching on SteamOS",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "echo dist/index.js is prebuilt"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

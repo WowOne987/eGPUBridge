@@ -1,0 +1,17 @@
+{
+  "name": "eGPUBridge",
+  "author": "Vova + GPT",
+  "flags": [
+    "root"
+  ],
+  "api_version": 0,
+  "publish": {
+    "tags": [
+      "system",
+      "hardware",
+      "egpu"
+    ],
+    "description": "eGPU manager for SteamOS Game Mode",
+    "version": "0.7.27"
+  }
+}
