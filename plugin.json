@@ -12,6 +12,6 @@
       "egpu"
     ],
     "description": "eGPU manager for SteamOS Game Mode",
-    "version": "0.7.27"
+    "version": "0.2.alfa"
   }
 }
