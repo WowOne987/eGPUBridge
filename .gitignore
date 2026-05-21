@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.log.*
+*.json.bak
+.stable_backup/
+backup_*/
+.claude/
+*.conf
+last_status.json
+hotkey_settings.json
+tv_control_automation.json
+.DS_Store
+node_modules/
